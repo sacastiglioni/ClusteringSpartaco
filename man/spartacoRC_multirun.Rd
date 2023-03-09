@@ -18,8 +18,8 @@ spartacoRC_multirun(
   verbose = T,
   verbose.display.intervals = 10,
   compute.uncertainty = TRUE,
-  lambda.ridge = 0,
-  lambda.lasso = 0
+  lambda.mu = 0,
+  lambda.tau = 0
 )
 }
 \arguments{
@@ -28,6 +28,8 @@ spartacoRC_multirun(
 \item{coordinates}{if `is.matrix(data)`, it takes the matrix of spatial coordinates of dimension `ncol(data)` x 2.}
 
 \item{assay}{if `class(data) == "SpatialExperiment"`, it takes either the name or the index of the assay to be used;}
+
+\item{column.labels}{the labels vector of column clusters;}
 
 \item{K}{the number of row clusters (only when `input.values == NULL`);}
 
@@ -47,7 +49,9 @@ spartacoRC_multirun(
 
 \item{compute.uncertainty}{if `TRUE` (default), it computes the clustering uncertainty of the rows and of the columns.}
 
-\item{R}{the number of column clusters (only when `input.values == NULL`);}
+\item{lambda.mu}{ridge penality for mean parameter estimate, (default is 0).}
+
+\item{lambda.tau}{lasso penality for tau parameter estimate, (default is 0).}
 }
 \value{
 An object of class `spartaco` with the parameter estimates, the clustering labels, the log-likelihood value at each iteration and the data, the ICL, the data matrix and the coordinates matrix, and the clustering uncertainty.

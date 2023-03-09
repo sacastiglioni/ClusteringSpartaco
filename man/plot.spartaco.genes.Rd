@@ -9,7 +9,7 @@
   r = 1:ncol(x$Expectation),
   g = 5,
   return.plots = T,
-  plot.labels = list(angle = 45, size = 4, hjust = 0, vjust = 0, to.remove = 0)
+  plot.labels = list(angle = 45, size = 4, hjust = 0, vjust = 0, to.display = 0)
 )
 }
 \arguments{
@@ -22,6 +22,8 @@
 \item{return.plots}{if `FALSE`, it returns only the data frame containing the `g` most variable genes into the spot clusters given by `r`.}
 
 \item{plot.labels}{a list containing the plot parameters of the most variable genes labels (see **Details**).}
+
+\item{to.display}{is the number of genes to display.}
 }
 \value{
 If `return.plots == T`, it returns the requested plots as `ggplot` objects. In addition, if `g > 0`, it returns a list of the top `g` highly variable genes in each spot cluster.
