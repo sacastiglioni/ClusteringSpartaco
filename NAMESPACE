@@ -2,7 +2,7 @@
 
 S3method(plot,spartaco)
 S3method(plot,spartaco.genes)
-export(CER)
+export(CER_RC)
 export(CombineSpartacoRC)
 export(GeneVariances)
 export(RCspartaco)
