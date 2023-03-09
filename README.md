@@ -6,7 +6,7 @@ In questo pacchetto sono implementate la versione per il clustering, base e pena
 Per maggiori dettagli si rimanda all'articolo del metodo spartaco https://arxiv.org/abs/2110.04872 e alla tesi di Laurea Magistrale di Sara Agavnì Castiglioni in Scienze Statistiche presso l'Università degli Studi di Padova. 
 
 
-# Istruzioni per l'installazione
+# Installazione
 ```
 remotes::install_github("sacastiglioni/ClusteringSpartaco")
 ```
@@ -20,4 +20,4 @@ RCspartaco(x = x, coordinates = coordinates, K = K, column.labels = column.labes
 ```
 
 # Convergenza
-Per impostazione predefinita, la procedura di stima viene eseguita per un massimo di ```max.iter``` iterazioni, ma viene precedentemente interrotta se viene raggiunto un certo criterio di convergenza (```conv.criterion```). Se ```conv.criterion = NULL```, non c'è una condizione di fine e la procedura viene eseguita per ```max.iter``` iterazioni, altrimenti viene interrotta quando l'incremento della log-likelihood di classificazione è inferiore a una certa soglia ```conv.criterion$epsilon``` per ```conv.criterion$iterations``` volte di seguito.
+Per impostazione predefinita, la procedura di stima viene eseguita per un massimo di ```max.iter``` iterazioni, ma viene precedentemente interrotta se viene raggiunto un certo criterio di convergenza (```conv.criterion```). Se ```conv.criterion = NULL```, non c'è una condizione di fine e la procedura viene eseguita per ```max.iter``` iterazioni, altrimenti viene interrotta quando l'incremento della log-verosimiglianza di classificazione è inferiore a una certa soglia ```conv.criterion$epsilon``` per ```conv.criterion$iterations``` volte di seguito.
