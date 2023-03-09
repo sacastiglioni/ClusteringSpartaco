@@ -10,6 +10,7 @@
 #' @param assay if `class(data) == "SpatialExperiment"`, it takes either the name or the index of the assay to be used;
 #' @param column.labels is a vector of length `ncol(data)` containing the column clustering labels.
 #' @param K the number of row clusters (only when `input.values == NULL`).
+#' @param column.labels the labels vector of column clusters.
 #' @param Delta.constr the constraint on the Delta matrix (default is 10; see **Details**).
 #' @param max.iter the maximum number of iterations the estimation algorithm is run.
 #' @param estimate.iterations the maximum number of iterations within each M Step.
@@ -19,6 +20,8 @@
 #' @param verbose.parallel.label an additional label that is used to display the on-going estimation process when `verbose == "parallel"`.
 #' @param save.options a list for specifying the saving parameters (see **Details**).
 #' @param seed set the interval seed of the function.
+#' @param lambda.mu ridge penality for mean parameter estimate, (default is 0).
+#' @param lambda.tau lasso penality for tau parameter estimate, (default is 0).
 #'
 #'
 #' @return An object of class `spartaco` with the parameter estimates, the clustering labels, the log-likelihood value at each iteration and the data, the ICL, the data matrix and the coordinates matrix.
@@ -59,8 +62,8 @@ RCspartaco <- function(data,
                      verbose.parallel.label = NULL,
                      save.options = NULL,
                      seed = NULL,
-                     lambda.ridge = 0,
-                     lambda.lasso = 0
+                     lambda.mu = 0,
+                     lambda.tau = 0
 ) {
   if(class(data)[1] == "SpatialExperiment"){
     if(is.numeric(assay)) which.assay <- assay
@@ -90,6 +93,6 @@ RCspartaco <- function(data,
        save.options = save.options,
        verbose = verbose,
        verbose.parallel.label = verbose.parallel.label,
-       lambda.ridge = lambda.ridge,
-       lambda.lasso = lambda.lasso)
+       lambda.mu = lambda.mu,
+       lambda.tau = lambda.tau)
 }

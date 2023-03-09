@@ -87,7 +87,7 @@ CombineSpartacoRC <- function(x = NULL, #KR = NULL,
         classif <- table(final$Cs, results[[j.to.invest[j]]]$Cs)[k,]
         k.j <- as.numeric(attr(classif, "names"))[which.max(classif)]
         comparison <- as.numeric(results[[j.to.invest[j]]]$Cs == k.j)
-        CERs[k,j] <<- CER_RC(reference = reference, estimate = comparison)
+        CERs[k,j] <<- CER(reference = reference, estimate = comparison)
       })
     })
     w <- 1/(final$max.logL[best.j]-final$max.logL[-best.j])

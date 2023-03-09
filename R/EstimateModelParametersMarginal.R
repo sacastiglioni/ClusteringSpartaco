@@ -8,8 +8,8 @@ Estimate.Cocluster.Parameters.marginal.constraint.trace <- function(x,
                                                                     traceDelta,
                                                                     maxit = 200,
                                                                     threshold = 1e-4,
-                                                                    lambda.ridge = lambda.ridge,
-                                                                    lambda.lasso = lambda.lasso){
+                                                                    lambda.mu = lambda.mu,
+                                                                    lambda.tau = lambda.tau){
   n <- nrow(x)
   p <- ncol(x)
   Mu <- cur.mu <- mu0
@@ -19,8 +19,8 @@ Estimate.Cocluster.Parameters.marginal.constraint.trace <- function(x,
   Beta <- cur.beta <- beta0
   logL <- tryCatch(
     {
-      logL.Cocluster(x, Mu, Tau, traceDelta/p-Tau, Alpha, Beta, U, d, lambda.ridge = lambda.ridge,
-                     lambda.lasso = lambda.lasso)
+      logL.Cocluster(x, Mu, Tau, traceDelta/p-Tau, Alpha, Beta, U, d, lambda.mu = lambda.mu,
+                     lambda.tau = lambda.tau)
     },
     error = function(cond) {
       return(-1e-40)
@@ -39,7 +39,7 @@ Estimate.Cocluster.Parameters.marginal.constraint.trace <- function(x,
         log(
           (diag(A.mat) - 2*mu*diag(B.mat) + mu^2*diag(C.mat))/2 + cur.beta
         )
-      )*(p/2 + cur.alpha)+lambda.ridge*(mu)^2
+      )*(p/2 + cur.alpha)+lambda.mu*(mu)^2
     })
     if(routine.mu$convergence != 0){
       stop("Convergence error in mu!")
@@ -79,7 +79,7 @@ Estimate.Cocluster.Parameters.marginal.constraint.trace <- function(x,
                            -(
                              -n/2*sum(log(taup * d + xip)) -
                                (p/2+cur.alpha) * sum(log(G.mat %*% (1/(taup * d + xip))/2 + cur.beta))
-                           )+lambda.lasso*abs(taup)
+                           )+lambda.tau*abs(taup)
                          }, control = list(maxit = 1000))
     if(routine.tau$convergence != 0){
       stop("Convergence error in tau!")
@@ -92,7 +92,7 @@ Estimate.Cocluster.Parameters.marginal.constraint.trace <- function(x,
     Beta[i] <- cur.beta
     Tau[i] <- cur.tau
 
-    logL[i] <- logL.Cocluster(x, Mu[i], Tau[i], traceDelta/p-Tau[i], Alpha[i], Beta[i], U, d, lambda.ridge, lambda.lasso)
+    logL[i] <- logL.Cocluster(x, Mu[i], Tau[i], traceDelta/p-Tau[i], Alpha[i], Beta[i], U, d, lambda.mu, lambda.tau)
     #if(round(logL[i] - logL[i-1], 2) < 0) stop(cat("Decreasing loglikelihood within the M Step:",logL[i-1],"and",logL[i]))
     if((logL[i] - logL[i-1]) < threshold){
       converged <- T

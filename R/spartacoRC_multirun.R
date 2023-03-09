@@ -12,7 +12,7 @@
 #' @param coordinates if `is.matrix(data)`, it takes the matrix of spatial coordinates of dimension `ncol(data)` x 2.
 #' @param assay if `class(data) == "SpatialExperiment"`, it takes either the name or the index of the assay to be used;
 #' @param K the number of row clusters (only when `input.values == NULL`);
-#' @param R the number of column clusters (only when `input.values == NULL`);
+#' @param column.labels the labels vector of column clusters;
 #' @param nstart the number of parallel runs of the estimation algorithm;
 #' @param Delta.constr the constraint on the Delta matrix (default is 10; see **Details**).
 #' @param max.iter the maximum number of iterations the estimation algorithm is run.
@@ -21,6 +21,8 @@
 #' @param verbose logical; it `TRUE`, it displays the estimation process through a dynamic progress bar.
 #' @param verbose.display.intervals integer; if `verbose == T`, the dynamic progress bar is updated after `max.iter/verbose.display.intervals` iterations.
 #' @param compute.uncertainty if `TRUE` (default), it computes the clustering uncertainty of the rows and of the columns.
+#' @param lambda.mu ridge penality for mean parameter estimate, (default is 0).
+#' @param lambda.tau lasso penality for tau parameter estimate, (default is 0).
 #'
 #' @return An object of class `spartaco` with the parameter estimates, the clustering labels, the log-likelihood value at each iteration and the data, the ICL, the data matrix and the coordinates matrix, and the clustering uncertainty.
 #'
@@ -58,8 +60,8 @@ spartacoRC_multirun <- function(data,
                               verbose = T,
                               verbose.display.intervals = 10,
                               compute.uncertainty = TRUE,
-                              lambda.ridge = 0,
-                              lambda.lasso = 0)
+                              lambda.mu = 0,
+                              lambda.tau = 0)
 {
   if(class(data)[1] == "SpatialExperiment"){
     if(is.numeric(assay)) which.assay <- assay
@@ -84,8 +86,8 @@ spartacoRC_multirun <- function(data,
                       Delta.constr = Delta.constr, max.iter = max.iter/verbose.display.intervals,
                       estimate.iterations = estimate.iterations, conv.criterion = conv.criterion,
                       verbose = F, save.options = NULL,
-                      lambda.ridge = lambda.ridge,
-                      lambda.lasso = lambda.lasso)
+                      lambda.mu = lambda.mu,
+                      lambda.tau = lambda.tau)
       }
       s
     }
@@ -97,8 +99,8 @@ spartacoRC_multirun <- function(data,
                Delta.constr = Delta.constr, max.iter = max.iter,
                estimate.iterations = estimate.iterations, conv.criterion = conv.criterion,
                verbose = F, save.options = NULL,
-               lambda.ridge = lambda.ridge,
-               lambda.lasso = lambda.lasso)
+               lambda.mu = lambda.mu,
+               lambda.tau = lambda.tau)
     )
   }
   output <- CombineSpartacoRC(results, compute.uncertainty)

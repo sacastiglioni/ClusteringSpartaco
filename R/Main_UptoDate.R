@@ -9,8 +9,8 @@ main <- function(x, coordinates,
                  save.options = NULL,
                  verbose = F,
                  verbose.parallel.label = NULL,
-                 lambda.ridge = 0,
-                 lambda.lasso = 0){
+                 lambda.mu = 0,
+                 lambda.tau = 0){
   Dist <- as.matrix(stats::dist(coordinates))
   Ds <- column.labels
   R <- length(unique(column.labels))
@@ -73,8 +73,8 @@ main <- function(x, coordinates,
                                                                                          beta0 = cur.beta[k,r],
                                                                                          tau0 = cur.tau[k,r],
                                                                                          maxit = estimate.iterations,
-                                                                                         lambda.ridge = lambda.ridge,
-                                                                                         lambda.lasso = lambda.lasso
+                                                                                         lambda.mu = lambda.mu,
+                                                                                         lambda.tau = lambda.tau
         )
         cur.mu[k,r] <<- estimation.parameters$mu
         cur.tau[k,r] <<- estimation.parameters$tau
@@ -112,8 +112,8 @@ main <- function(x, coordinates,
                                             Beta = cur.beta[k,r],
                                             U = Uglob[[r]],
                                             d = Dglob[Ds == r],
-                                            lambda.ridge = 0,
-                                            lambda.lasso = 0)
+                                            lambda.mu = 0,
+                                            lambda.tau = 0)
       })
     })
     ll[i] <- sum(logL.values)

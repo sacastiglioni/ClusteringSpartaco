@@ -10,15 +10,17 @@
 #' - `2` displays the co-cluster spatial signal-to-noise ratios;
 #' - `3` displays the map of the spots colored with respect to the estimated column clusters;
 #' - `4` if `!is.null(k)`, it displays the average gene expression in the clusters `k` and `r`, otherwise it displays the expression of the gene given in `gene.name`.
-#' @param gene.name  (used only when `type == 4)`; it receives the name of the gene to display. If `!is.null(k)`, it displays the average expression of the gene clusters given by `k`.
-#' @param k (used only when `type == 4)` the gene clusters to plot.
-#' @param r (used only when `type == 4)` the spot clusters to plot.
+#' @param gene.name  (used only when `type == 4`); it receives the name of the gene to display. If `!is.null(k)`, it displays the average expression of the gene clusters given by `k`.
+#' @param k (used only when `type == 4`) the gene clusters to plot.
+#' @param r (used only when `type == 4`) the spot clusters to plot.
 #' @param manual.palette a vector of colors used when `type == 3`.
 #' @param display.all.spots if `TRUE` (default) and `type == 4`, it displays the entire grid of spots.
-#'
+#' @param remove.outliers (used only when `type == 4)` if TRUE remove spots with extreme gene expression value (lower-whisker or upper-whisker)
+#' @param coef (used only when `type == 4` and if `remove.outliers == TRUE`) in the selection of outliers, spots with gene expression value grater that upper-whisker value times coef are removed.
+#' @param range vector to set the minimum and maximum of the scale of value to display (the default is `NULL` and the minimum and maximum of the value is used).
 #' @return The requested plot is displayed. In addition, if assigned to an object, it will return the `ggplot` object.
 #'
-plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = NULL, r = 1:ncol(x$mu), manual.palette = NULL, display.all.spots = T, ...){
+plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = NULL, r = 1:ncol(x$mu), manual.palette = NULL, display.all.spots = T, remove.outliers = F, coef = 1, range, ...){
   if(class(x) != "spartaco") stop("the input file is not a spartaco object")
   if(length(type) > 1) type <- 1
   K <- nrow(x$mu)
@@ -40,13 +42,19 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
 
   # ---plot mu
   if(type == 1){
+    if(is.null(range)){
+      range[1] <- min(as.vector(x$mu))
+      range[2] <- max(as.vector(x$mu))
+    }
     Plots <- ggplot(gr, aes(xmin = as.vector(sapply(1:R, function(i) rep(xlim.left[i],K))),
                             xmax = as.vector(sapply(1:R, function(i) rep(xlim.right[i],K))),
                             ymin = rep(ylim.left,R),
                             ymax = rep(ylim.right,R),
                             fill = Mu)
     )+geom_rect()+theme_bw()+
-      scale_fill_distiller(palette = "RdPu")+
+      scale_fill_distiller(palette = "RdPu",
+                           limits = c(range[1], range[2]),
+                           breaks = round(seq(range[1], range[2], length = 3),1))+
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.text=element_text(size=18),
@@ -70,13 +78,20 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
 
   # ---plot tau/xi
   if(type == 2){
+    if(is.null(range)){
+      range[1] <- min(as.vector(x$tau/x$xi))
+      range[2] <- max(as.vector(x$tau/x$xi))
+    }
     Plots <- ggplot(gr, aes(xmin = as.vector(sapply(1:R, function(i) rep(xlim.left[i],K))),
                             xmax = as.vector(sapply(1:R, function(i) rep(xlim.right[i],K))),
                             ymin = rep(ylim.left,R),
                             ymax = rep(ylim.right,R),
                             fill = Ratio)
     )+geom_rect()+theme_bw()+
-      viridis::scale_fill_viridis(discrete=FALSE)+
+      viridis::scale_fill_viridis(discrete=FALSE,
+                                  limits = c(range[1], range[2]),
+                                  breaks = round(seq(range[1], range[2], length = 3),1))+
+
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.text=element_text(size=18),
@@ -138,14 +153,40 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
     if(is.null(r)) r <- 1:R
     if(!display.all.spots){
       if(length(k) <= 1){
-        if(length(k) == 0)
+        if(length(k) == 0){
           x.bar <- x$x[which(row.names(x$x) == gene.name), which(x$Ds %in% r)]
-        if(length(k) == 1)
+          if(is.null(range)){
+            min <- round(boxplot(x.bar)$stats[1,1])
+            max <- round(coef*boxplot(x.bar)$stats[5,1])
+          }
+          else{
+            min <- range[1]
+            max <- range[2]
+          }
+          if(remove.outliers){
+            x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+            x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+          }
+        }
+        if(length(k) == 1){
           x.bar <- colMeans(x$x[which(x$Cs == k), which(x$Ds %in% r)])
+          if(is.null(range)){
+            min <- round(boxplot(x.bar)$stats[1,1])
+            max <- round(coef*boxplot(x.bar)$stats[5,1])
+          }
+          else{
+            min <- range[1]
+            max <- range[2]
+          }
+          if(remove.outliers){
+            x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+            x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+          }
+        }
         Plots <- ggplot(Coord[which(x$Ds %in% r),], aes(x, y, color = x.bar))+
           geom_point(size = 3)+theme_bw()+
-          scale_fill_distiller(type = "seq",
-                                palette = "BuPu")+
+          scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
+                               limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
           labs(col = "")+
           theme(panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
@@ -168,10 +209,22 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
         for(k.ind in 1:length(k)){
           Plots[[k.ind]] <- local({
             x.bar <- colMeans(x$x[x$Cs == k[k.ind], which(x$Ds %in% r)])
+            if(is.null(range)){
+              min <- round(boxplot(x.bar)$stats[1,1])
+              max <- round(coef*boxplot(x.bar)$stats[5,1])
+            }
+            else{
+              min <- range[1]
+              max <- range[2]
+            }
+            if(remove.outliers){
+              x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+              x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+            }
             ggplot(Coord[which(x$Ds %in% r),], aes(x, y, color = x.bar))+
               geom_point(size = 3)+theme_bw()+
-              scale_fill_distiller(type = "seq",
-                                    palette = "BuPu")+
+              scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
+                                   limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
               labs(col = "")+
               theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),
@@ -191,14 +244,42 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
       }
     } else {  # if display.all.spots == T
       if(length(k) <= 1){
-        if(length(k) == 0)
+        if(length(k) == 0){
           x.bar <- x$x[which(row.names(x$x) == gene.name), which(x$Ds %in% r)]
-        if(length(k) == 1)
+          if(is.null(range)){
+            min <- round(boxplot(x.bar)$stats[1,1])
+            max <- round(coef*boxplot(x.bar)$stats[5,1])
+          }
+          else{
+            min <- range[1]
+            max <- range[2]
+          }
+          if(remove.outliers){
+            x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+            x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+          }
+        }
+        if(length(k) == 1){
           x.bar <- colMeans(x$x[which(x$Cs == k), which(x$Ds %in% r)])
+          if(is.null(range)){
+            min <- round(boxplot(x.bar)$stats[1,1])
+            max <- round(coef*boxplot(x.bar)$stats[5,1])
+          }
+          else{
+            min <- range[1]
+            max <- range[2]
+          }
+          if(remove.outliers){
+            x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+            x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+          }
+        }
         Plots <- ggplot(Coord[-which(x$Ds %in% r),], aes(x, y))+
           theme_bw()+
           geom_point(data = Coord[-which(x$Ds %in% r),], mapping = aes(x, y), size = 3, fill = "white", colour = "gray74", shape = 21)+
           geom_point(data = Coord[which(x$Ds %in% r),], mapping = aes(x, y, fill = x.bar), colour = "white", size = 4, shape = 21)+
+          scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
+                               limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
           labs(fill = "")+
           theme(panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
@@ -225,8 +306,8 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
               theme_bw()+
               geom_point(data = Coord[-which(x$Ds %in% r),], mapping = aes(x, y), size = 3, fill = "white", colour = "gray74", shape = 21)+
               geom_point(data = Coord[which(x$Ds %in% r),], mapping = aes(x, y, fill = x.bar), colour = "white", size = 4, shape = 21)+
-              scale_fill_distiller(type = "seq",
-                                    palette = "BuPu")+
+              scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
+                                   limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
               labs(col = "")+
               theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),

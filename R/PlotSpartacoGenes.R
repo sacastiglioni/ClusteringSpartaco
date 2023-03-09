@@ -11,6 +11,7 @@
 #' @param g the number of highly variable genes in each spot cluster to be highligthed.
 #' @param return.plots if `FALSE`, it returns only the data frame containing the `g` most variable genes into the spot clusters given by `r`.
 #' @param plot.labels a list containing the plot parameters of the most variable genes labels (see **Details**).
+#' @param to.display is the number of genes to display.
 #'
 #' @return If `return.plots == T`, it returns the requested plots as `ggplot` objects. In addition, if `g > 0`, it returns a list of the top `g` highly variable genes in each spot cluster.
 #'
@@ -44,12 +45,12 @@
 #' plot(sigma2, g = 10, r = c(1, 3))
 
 
-plot.spartaco.genes <- function(x, r = 1:ncol(x$Expectation), g = 5, return.plots = T, plot.labels = list(angle = 45, size = 4, hjust = 0, vjust = 0, to.remove = 0)){
+plot.spartaco.genes <- function(x, r = 1:ncol(x$Expectation), g = 5, return.plots = T, plot.labels = list(angle = 45, size = 4, hjust = 0, vjust = 0, to.display = 0)){
   if(is.null(plot.labels$angle)) plot.labels$angle <-  45
   if(is.null(plot.labels$size)) plot.labels$size <- 2
   if(is.null(plot.labels$hjust)) plot.labels$hjust <- 0
   if(is.null(plot.labels$vjust)) plot.labels$vjust <- 0
-  if(is.null(plot.labels$to.remove)) plot.labels$to.remove <- 0
+  if(is.null(plot.labels$to.display)) plot.labels$to.display <- 0
   gene.names <- factor(row.names(x$Expectation), levels = row.names(x$Expectation))
   K <- length(unique(x$Cs))
   R <- ncol(x$Expectation)
@@ -85,7 +86,7 @@ plot.spartaco.genes <- function(x, r = 1:ncol(x$Expectation), g = 5, return.plot
       Cs = as.factor(x$Cs))
     df$v <- x$HPD.left[,r]
     df$w <- x$HPD.right[,r]
-    df <- df[1:plot.labels$to.remove,]
+    df <- df[1:plot.labels$to.display,]
 
     if(return.plots){
       Plots[[j]] <- local({
