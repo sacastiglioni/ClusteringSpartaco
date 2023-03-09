@@ -3,7 +3,7 @@ di Sara Agavnì Castiglioni.
 
 
 In questo pacchetto sono implementate la versione per il clustering, base e penalizzata, del modello di co-clustering Spartaco di A. Sottosanti e D. Risso.
-Per maggiori dettagli si rimanda all'articolo del metodo spartaco https://arxiv.org/abs/2110.04872 e alla tesi di Laurea Magistrale di Sara Agavnì Castiglioni in Scienze Statistiche presso l'Università degli Studi di Padova. 
+Per maggiori dettagli si rimanda all'articolo del metodo Spartaco https://arxiv.org/abs/2110.04872 e alla tesi di Laurea Magistrale di Sara Agavnì Castiglioni in Scienze Statistiche presso l'Università degli Studi di Padova. 
 
 
 # Installazione
