@@ -18,9 +18,12 @@
 #' @param remove.outliers (used only when `type == 4)` if TRUE remove spots with extreme gene expression value (lower-whisker or upper-whisker)
 #' @param coef (used only when `type == 4` and if `remove.outliers == TRUE`) in the selection of outliers, spots with gene expression value grater that upper-whisker value times coef are removed.
 #' @param range vector to set the minimum and maximum of the scale of value to display (the default is `NULL` and the minimum and maximum of the value is used).
+#'
+#'
+#'
 #' @return The requested plot is displayed. In addition, if assigned to an object, it will return the `ggplot` object.
 #'
-plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = NULL, r = 1:ncol(x$mu), manual.palette = NULL, display.all.spots = T, remove.outliers = F, coef = 1, range, ...){
+plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = NULL, r = 1:ncol(x$mu), manual.palette = NULL, display.all.spots = T, remove.outliers = F, coef = 1, range = NULL, ...){
   if(class(x) != "spartaco") stop("the input file is not a spartaco object")
   if(length(type) > 1) type <- 1
   K <- nrow(x$mu)
@@ -54,7 +57,7 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
     )+geom_rect()+theme_bw()+
       scale_fill_distiller(palette = "RdPu",
                            limits = c(range[1], range[2]),
-                           breaks = round(seq(range[1], range[2], length = 3),1))+
+                           breaks = round(seq(range[1], range[2], length = 3),2))+
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.text=element_text(size=18),
@@ -90,7 +93,7 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
     )+geom_rect()+theme_bw()+
       viridis::scale_fill_viridis(discrete=FALSE,
                                   limits = c(range[1], range[2]),
-                                  breaks = round(seq(range[1], range[2], length = 3),1))+
+                                  breaks = round(seq(range[1], range[2], length = 3),2))+
 
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
@@ -186,7 +189,7 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
         Plots <- ggplot(Coord[which(x$Ds %in% r),], aes(x, y, color = x.bar))+
           geom_point(size = 3)+theme_bw()+
           scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
-                               limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
+                               limits = c(min,max), breaks = round(seq(min,max, length = 4),2))+
           labs(col = "")+
           theme(panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
@@ -223,8 +226,8 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
             }
             ggplot(Coord[which(x$Ds %in% r),], aes(x, y, color = x.bar))+
               geom_point(size = 3)+theme_bw()+
-              scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
-                                   limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
+              scale_color_distiller(type = "seq", palette = "Spectral", direction = -1,
+                                   limits = c(min,max), breaks = round(seq(min,max, length = 4),2))+
               labs(col = "")+
               theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),
@@ -279,7 +282,7 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
           geom_point(data = Coord[-which(x$Ds %in% r),], mapping = aes(x, y), size = 3, fill = "white", colour = "gray74", shape = 21)+
           geom_point(data = Coord[which(x$Ds %in% r),], mapping = aes(x, y, fill = x.bar), colour = "white", size = 4, shape = 21)+
           scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
-                               limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
+                               limits = c(min,max), breaks = round(seq(min,max, length = 4),2))+
           labs(fill = "")+
           theme(panel.grid.major = element_blank(),
                 panel.grid.minor = element_blank(),
@@ -302,12 +305,24 @@ plot.spartaco <- function(x, type = 1, gene.name = readline("gene name: "), k = 
         for(k.ind in 1:length(k)){
           Plots[[k.ind]] <- local({
             x.bar <- colMeans(x$x[x$Cs == k[k.ind], which(x$Ds %in% r)])
+            if(is.null(range)){
+              min <- round(boxplot(x.bar)$stats[1,1])
+              max <- round(coef*boxplot(x.bar)$stats[5,1])
+            }
+            else{
+              min <- range[1]
+              max <- range[2]
+            }
+            if(remove.outliers){
+              x.bar[x.bar < min] <- rep(min+1e-1, sum(x.bar < min))
+              x.bar[x.bar > max] <- rep(max-1e-1, sum(x.bar > max))
+            }
             ggplot(Coord[-which(x$Ds %in% r),], aes(x, y))+
               theme_bw()+
               geom_point(data = Coord[-which(x$Ds %in% r),], mapping = aes(x, y), size = 3, fill = "white", colour = "gray74", shape = 21)+
               geom_point(data = Coord[which(x$Ds %in% r),], mapping = aes(x, y, fill = x.bar), colour = "white", size = 4, shape = 21)+
               scale_fill_distiller(type = "seq", palette = "Spectral", direction = -1,
-                                   limits = c(min,max), breaks = round(seq(min,max, length = 4)))+
+                                   limits = c(min,max), breaks = round(seq(min,max, length = 4),2))+
               labs(col = "")+
               theme(panel.grid.major = element_blank(),
                     panel.grid.minor = element_blank(),

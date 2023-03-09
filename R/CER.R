@@ -19,7 +19,7 @@
 #' b <- c(1, 1, 0, 1, 1)
 #' CER(a, b)
 
-CER_RC <- function(reference,
+CER <- function(reference,
                    estimate){
   if(length(reference) != length(estimate)) stop("The two objects have different length")
   n <- length(reference)
