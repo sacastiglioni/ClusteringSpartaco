@@ -1,5 +1,5 @@
 # ClusteringSpartaco
-di Sara Agavnì Castiglioni.
+di Sara Agavnì Castiglioni e Andrea Sottosanti.
 
 
 In questo pacchetto sono implementate la versione per il clustering, base e penalizzata, del modello di co-clustering Spartaco di A. Sottosanti e D. Risso.
