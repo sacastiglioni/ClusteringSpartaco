@@ -2,7 +2,7 @@
 di Sara Agavnì Castiglioni e Andrea Sottosanti.
 
 
-In questo pacchetto sono implementate la versione per il clustering, base e penalizzata, del modello di co-clustering Spartaco di A. Sottosanti e D. Risso.
+In questo pacchetto sono implementate la versione per il clustering, base e penalizzata, del modello Spartaco di A. Sottosanti e D. Risso.
 Per maggiori dettagli si rimanda all'articolo del metodo Spartaco *Co-clustering of Spatially Resolved Transcriptomic Data* di A. Sottosanti e D. Risso (2022), disponibile qui https://arxiv.org/abs/2110.04872, e alla tesi di Laurea Magistrale di Sara Agavnì Castiglioni in Scienze Statistiche presso l'Università degli Studi di Padova. 
 
 
