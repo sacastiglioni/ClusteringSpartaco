@@ -1,1 +1,214 @@
+---
+title: "Spatial Signature Clustering with ClusteringSpartaco: Investigating Spatial Patterns in Biological Processes"
+author: Sara Agavni' Castiglioni and Andrea Sottosanti
+output: rmarkdown::pdf_document
+vignette: >
+  %\VignetteIndexEntry{real data analysis}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+In this vignette, we show how to use the functions of the R package `ClusteringSpartaco` for fitting the clustering version of the SpaRTaCo model ([*Sottosanti and Risso, 2022*](https://arxiv.org/pdf/2110.04872.pdf)).
+
+The study focuses on exploring spatial patterns in signature scores of biological processes using the new version of SpaRTaCo applied to spatial signature scores from a prostate cancer tissue sample when external knowledge such as manual cell-type annotations to inform signature clustering.
+
+We use the Signifinder package R `signifinder` ([*Pirrotta et al., 2023*] (https://doi.org/10.1101/2023.03.07.530940)) to compute the relevant signatures of interest.
+
+The dataset used for this analysis can be accessed from the 10x Genomics website (https://www.10xgenomics.com/resources/datasets/human-prostate-cancer-adenocarcinoma-with-invasive-carcinoma-ffpe-1-standard-1-3-0).
+
+This vignette provides step-by-step instructions for calculating signature scores and applying the model to the specific dataset. Please note that due to the high computational cost of model estimation, most of the code has been executed locally, with the results provided.
+
+Please be aware that the model we present in this vignette can be directly applied to gene spatial expression data and more in general to any spatial datasets. A separate vignette will be added soon.
+
+
+```{r, echo = F}
+library(signifinder)
+library(spartaco)
+library(ggplot2)
+library(scran)
+```
+
+## Data import
+We begin by uploading the `SpatialExperiment` objects that contain the spatial expression data of the genes detected in the tissue. Additionally, we include the available annotations provided by Dr. Giovanni Esposito from Istituto Oncologico Veneto.
+
+Typically, this type of data is organized as a table consisting of spot-barcode and corresponding spot labels. In our case, we focus on saving only the spot labels, which are stored in the `PathologistAnnotation` column of the `TENxannotation` data frame.
+```{r, eval=F}
+load("spe_raw.RData")
+
+TENxannotation <- read.csv("PathologistAnnotation.csv", header = TRUE)
+column.label <- as.factor(TENxannotation$PathologistAnnotation)
+```
+
+## Data Preparation
+### Spot cluster exploration
+As a good practice, it is important to examine the sizes of spot clusters with the same annotation label. In our case, we observe that there are only 5 spots labeled as "blood vessels". To ensure more stable model estimation, it is advisable to remove these spots from the dataset. Consequently, we also remove the corresponding labels from the `column.label` vector.
+
+To fit the model `RCSpartaco`, the `column.label` vector needs to be in numeric format. Therefore, we convert it into a numeric vector using the `as.numeric()` function.
+```{r, eval=F}
+# Display spot cluster sizes
+table(column.label)
+
+# Remove spots with "blood vessel" label from the data
+spe <- spe_raw[,-which(column.label == "blood vessel")]
+column.label <- column.label[-which(column.label == "blood vessel")]
+
+# Convert the spot labels to numeric format for RCSpartaco
+column.label <- as.numeric(column.label)
+```
+
+### Normalization of Gene Expression
+We normalize the data using the Scran method implemented in the R package `scran`. In this step, we first apply the `quickCluster` function to cluster the data quickly. Then, we use the `computeSumFactors` function to calculate size factors, taking into account the clustering information. Finally, we perform log-normalization of the counts using the `logNormCounts` function. 
+```{r, eval=F}
+# Perform quick clustering
+c <- quickCluster(spe)
+
+# Compute size factors using the clustering information
+spe <- computeSumFactors(spe, cluster = c)
+
+# Perform log-normalization of counts
+spe <- logNormCounts(spe)
+```
+
+### Compute Signature Scores
+We can check all the signatures available in the package with the function `availableSignatures` of the `signifinder` package.
+```{r, eval=F}
+availableSignatures(tissue = c("pan-tissue","prostate"), requiredInput = "rnaseq", description = FALSE)
+```
+
+To compute the scores of the desired signatures, we utilize the `multipleSign` function in `signifinder` package. In this case, we specify the tissue as either "pan-tissue" or "prostate" and indicate that the required input is RNA-seq data. It is important to note that gene lists for these signatures are typically provided in symbol IDs. Therefore, we prepare a matrix where the row names correspond to the gene symbol IDs.
+
+The output of this computation is a `SummarizedExperiment` object, where the computed scores are stored in the `colData` section.
+
+```{r, eval=F}
+x.symbol <- as.matrix(assay(spe,2))
+rownames(x.symbol) <- rowData(spe)$symbol
+
+sign.symbol <- multipleSign(x.symbol, inputType = "rnaseq", 
+                         tissue = c("pan-tissue", "prostate"))
+```
+
+### Make signatures scores spatial experiment: signature by row
+To estimate the model, we create a new `Spatial Experiment` object using the signature scores saved in `sign.symbol`. It is important to note that we want the signatures to be represented by rows in our data. Therefore, we save the transpose of the `colData(sign.symbol)` matrix as assay in the new spatial experiment object and name it "norm_counts".
+```{r, eval=F}
+data <- t(as.matrix(colData(sign.symbol)))
+# Save signature and barcode names for later reference
+signatures <- attributes(data)$dimnames[[1]]
+barcodes <- attributes(data)$dimnames[[2]]
+attributes(data)$dimnames <- NULL
+
+spe_sign <- SpatialExperiment(
+  assay = data,
+  spatialCoords = spatialCoords(spe)
+)
+
+# Rename the assay to "norm_counts"
+names(assays(spe_sign)) <- "norm_counts"
+
+# Assign the signature and barcode names
+rownames(spe_sign) <- signarutes
+colnames(spe_sign) <- barcodes
+```
+
+### Example of signature scores map
+To visually explore the map scores of a specific signature overall the tissue we can use the `plotSign` function. In this case, the signature of interest is specified with the argument `whichSign` = "EMT_Mak". The parameter `size = 0.7` controls the size of the plotted points. The `ggtitle("")` command can be used to add a custom title to the plot, if desired.
+```{r, eval=F}
+plotSign(spe_sign, whichSign = "EMT_Mak", size = 0.7) + ggtitle("")
+```
+
+### Signature filtering
+We can visualize some signature's technical parameters to evaluate their reliability for our analysis with the function `evaluationSignPlot` in `signifinder` package. Based on the evaluation, we identify the signatures "ImmuneCyt_Davoli" and "ImmuneCyt_Rooney" as having a high proportion of zero values, indicating that most of the genes associated with these signatures are not expressed. Consequently, we exclude these signatures from further analysis.
+```{r, eval=F}
+evaluationSignPlot(data = sign.symbol)
+spe_sign2 <- spe_sign[-which(rownames(spe_sign) == "ImmuneCyt_Davoli"),]
+spe_sign2 <- spe_sign2[-which(rownames(spe_sign2) == "ImmuneCyt_Rooney"),]
+```
+
+### Missing data analysis
+To ensure data completeness, we perform a check for missing values in the `spe_sign2` object. It is possible that for some spots, the computation of the desired signature is not possible due to the absence of expression of the needed genes. In our case, we observe one missing value for the "ImmunoScore_Roh" signature in a single spot. To address this, we decide to impute the median score level of the signature across the entire tissue.
+```{r, eval=F}
+# Check for missing values
+x <- assay(spe_sign2)
+table(is.na(x))
+
+# Identify spot with missing value
+missing_spot <- barcodes[round(which(is.na(x))/nrow(x)) + 1]
+
+# Identify signature with missing value
+pos <- which(is.na(x))
+index <- (pos - nrow(x) * round(pos/nrow(x)))
+missing_signature <- rownames(x)[index]
+
+# Impute missing value with median score
+assay(spe_sign2)[pos] <- median(x[index,], na.rm = TRUE)
+```
+
+### Score Standardization
+To enable meaningful comparisons between different signatures, we apply score standardization to the `spe_sign2` object. This step is necessary as the score scales can vary significantly across different signatures. The resulting `spe_sign2` object contains measurements of 23 signatures corresponding to 4366 spots, and it is now ready for further analysis.
+```{r, eval=F}
+tmp <- t(apply(assay(spe_sign2), 1, function(x) (x-mean(x))/sd(x)))
+assay(spe_sign2) <- tmp
+```
+
+### Standardization of Coordinates
+To ensure numerical stability during the estimation of the model, it is advisable to standardize the spatial coordinates as well. 
+```{r, eval=F}
+coordinates <- as.matrix(spatialCoords(data))
+coordinates <- apply(coordinates, MARGIN = 2, function(X) {(X-min(X))/(diff(range(X)))})
+```
+
+## Model fitting
+`RCSpaRTaCo` model (Row-Clustering Spartaco) can be fitted on the signature scores obtained at the previous step, along with the spot labels provided through manual annotation. The estimation function runs for a specified number of iterations, starting from different sets of initial points.
+
+Let's consider an example where we aim to run the estimation using 5 different sets of starting points, leveraging 5 cores for parallel processing. The code for this scenario is as follows:
+```{r, eval=F}
+plan(multisession(workers = 5))
+results <- spartacoRC_multirun(data = spe_sign, assay = "norm_counts", coordinates = coordinates,
+                              K = 3, column.labels = column.labels, nstart = 5,
+                              estimate.iterations = 10, max.iter = 3000, 
+                              verbose = F, Delta.constr = 100)
+plan(sequential)
+```
+The estimated `RCSpaRTaCo` model has 12 blocks (3 row clusters and 4 column clusters), and the estimation algorithm is run for 3,000 iterations starting from 5 different sets of points. 
+
+If you wish to run `RCSpaRTaCo` with multiple dimensions simultaneously, you can make use of the parallel::mclapply function. Consider a scenario where you want to assess the model for row clusters ranging from 1 to 5. The code snippet below illustrates how to achieve this:
+```{r, eval=F}
+K.values = 1:5
+plan(multisession(workers = 5))
+multiresults <- parallel::mclapply(K.values, function(r)
+  spartacoRC_multirun(data = spe_sign, assay = "norm_counts", K = k,
+                    column.labels = column.labels, nstart = 5,
+                              estimate.iterations = 10, max.iter = 3000, 
+                              verbose = F, Delta.constr = 100, mc.cores = length(K.values))
+```
+
+### Selection of the model
+The models' goodness of fit is compared using the \emph{integrated complete log-likelihood} criterion (ICL). The model with $K=3$ has a higher ICL value than that with $K=1$ and $K=2$, confirming the presence of multiple signature clusters. With $K=4$ and $K = 5$ the estimation algorithm stopped due to a single signature being assigned to a cluster at some point, indicating the absence of additional clusters.The model corresponding to $K=3$ was chosen as the selected model (stored in `sel.model`) for further analysis and interpretation.
+
+```{r, eval=F}
+ICL.values <- unlist(lapply(multiresults, function(x) x$ICL))
+ggplot(data.frame(K.values, ICL.values), aes(R.values, ICL.values/1e+6))+geom_point()+
+  theme_classic()+ylab("ICL (1e+6)")
+
+sel.model <- multiresults[[3]] # corresponding to the model with K = 3
+```
+
+### Model Exploration
+To visually explore the model, we can generate heatmaps for the estimated mean and spatial signal-to-noise ratio parameters. 
+```{r, eval=F}
+plot(sel.model, type = 1)+theme(axis.text=element_text(size=8)) 
+plot(sel.model, type = 2)+theme(axis.text=element_text(size=8)) 
+```
+We learn the following insights:
+
+- Cluster $k = 1$ shows a strong spatial effect throughout the tissue, particularly in the fibroblast and stroma areas. It has higher mean score values compared to other regions.
+
+- Cluster $k = 2$ exhibits a moderate spatial effect, while cluster $k = 3$ has no significant spatial effect.
+
+- The estimated means ${\hat\mu_{2r}, r = 1,\ldots,4}$ in cluster $k = 2$ are lower than the surrounding areas, while ${\hat\mu_{3r}, r = 1,\ldots,4}$ in cluster $k = 3$ are higher within the tumor compared to the surrounding regions.
