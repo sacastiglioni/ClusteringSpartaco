@@ -50,7 +50,7 @@ column.label <- as.factor(TENxannotation$PathologistAnnotation)
 ### Spot cluster exploration
 As a good practice, it is important to examine the sizes of spot clusters with the same annotation label. In our case, we observe that there are only 5 spots labeled as "blood vessels". To ensure more stable model estimation, it is advisable to remove these spots from the dataset. Consequently, we also remove the corresponding labels from the `column.label` vector.
 
-To fit the model `RCSpartaco`, the `column.label` vector needs to be in numeric format. Therefore, we convert it into a numeric vector using the `as.numeric()` function.
+To fit the model `RCSpartaco` (Row Clustering Spartaco), the `column.label` vector needs to be in numeric format. Therefore, we convert it into a numeric vector using the `as.numeric()` function.
 ```{r, eval=F}
 # Display spot cluster sizes
 table(column.label)
