@@ -26,4 +26,4 @@ We show how to use the functions of the R package `ClusteringSpartaco` for fitti
 - for the ```PathologistAnnotation.csv``` https://drive.google.com/file/d/1xunCdaatsB_Pzb9uIz99ar4l4ja8hFYE/view?usp=sharing
 - for the ```spe_raw.RData``` data https://drive.google.com/file/d/1HAhzrN2bkN3Z4BtHZqU78Wck6GGKiBzh/view?usp=sharing or https://www.10xgenomics.com/resources/datasets/human-prostate-cancer-adenocarcinoma-with-invasive-carcinoma-ffpe-1-standard-1-3-0
 - for the ```sign.symbol.RData``` https://drive.google.com/file/d/1Z0q2r8ftJQSlR8gb3LuAsC2XWdXCaFBH/view?usp=sharing
-- for the model ```results``` https://drive.google.com/file/d/1VRGBoFdkCH3XOBbOM_KXft3hng_IYs5S/view?usp=sharing
+- for the ```results``` https://drive.google.com/file/d/1VRGBoFdkCH3XOBbOM_KXft3hng_IYs5S/view?usp=sharing
