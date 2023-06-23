@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-In this vignette, we show how to use the functions of the R package `ClusteringSpartaco` for fitting the clustering version of the SpaRTaCo model ([*Sottosanti and Risso, 2022*](https://arxiv.org/pdf/2110.04872.pdf)).
+In this vignette, we show how to use the functions of the R package `ClusteringSpartaco` for fitting the clustering version of the SpaRTaCo model ([*Sottosanti and Risso, 2023*](https://arxiv.org/pdf/2110.04872.pdf)).
 
 The study focuses on exploring spatial patterns in signature scores of biological processes using the new version of SpaRTaCo applied to spatial signature scores from a prostate cancer tissue sample when external knowledge such as manual cell-type annotations to inform signature clustering.
 
